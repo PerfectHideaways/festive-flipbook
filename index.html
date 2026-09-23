@@ -59,12 +59,9 @@ html.feed{scroll-snap-type:y proximity}
 html.feed header{position:sticky;top:0;box-shadow:0 1px 0 var(--stone)}
 html.feed .nav,html.feed #stage{display:none}
 html.feed main{padding:12px 10px calc(var(--fh) + 24px + env(safe-area-inset-bottom,0px))}
-#feed{display:none;max-width:1000px;margin:0 auto}
+#feed{display:none;max-width:760px;margin:0 auto}
 html.feed #feed{display:block}
-html.feed .spread{display:flex;width:100%;margin:0 0 10px;background:#fff;cursor:zoom-in;scroll-snap-align:start;scroll-margin-top:calc(var(--hh) + 8px);box-shadow:0 1px 3px rgba(34,31,32,.12);-webkit-tap-highlight-color:transparent}
-html.feed .spread:focus-visible{outline:2px solid var(--green);outline-offset:2px}
-html.feed .spread .page{flex:1 1 0;min-width:0;aspect-ratio:2339/1654}
-html.feed a.hs{pointer-events:none}
+html.feed .page{width:100%;aspect-ratio:2339/1654;margin:0 0 10px;scroll-snap-align:start;scroll-margin-top:calc(var(--hh) + 8px);box-shadow:0 1px 3px rgba(34,31,32,.12)}
 .hint{text-align:center;font-size:12.5px;margin:0 0 12px;color:var(--grey)}
 html.flip .hint{display:none}
 html.feed footer{position:fixed;left:0;right:0;bottom:0;box-shadow:0 -1px 0 var(--stone)}
@@ -81,10 +78,6 @@ html.feed footer{position:fixed;left:0;right:0;bottom:0;box-shadow:0 -1px 0 var(
 #zpages{display:flex;width:max-content;min-width:100%;justify-content:center}
 .zp{position:relative;flex:none;width:var(--zw);background:#fff}
 .zp img{display:block;width:100%;height:auto}
-.zctl{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;z-index:2}
-.zctl .btn{width:44px;height:44px;padding:0;justify-content:center;background:#fff;border:1px solid var(--stone);box-shadow:0 2px 8px rgba(34,31,32,.15)}
-.zctl .btn svg{width:18px;height:18px}
-.zctl .btn[disabled]{opacity:.35;box-shadow:none}
 </style>
 </head>
 <body>
@@ -108,7 +101,7 @@ html.feed footer{position:fixed;left:0;right:0;bottom:0;box-shadow:0 -1px 0 var(
   <button class="nav" id="prev" aria-label="Previous page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m15 5-7 7 7 7"/></svg></button>
   <div id="stage"><div id="book"></div></div>
   <button class="nav" id="next" aria-label="Next page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 5 7 7-7 7"/></svg></button>
-  <p class="hint">Tap any page to zoom in and read the details. In the zoomed view, tap a hideaway’s name to see it on our website.</p>
+  <p class="hint">Pinch or tap Zoom to read the details. Tap a hideaway’s name to see it on our website.</p>
   <div id="feed"></div>
 </main>
 <div id="zoom" hidden role="dialog" aria-modal="true" aria-label="Zoomed view">
@@ -119,10 +112,6 @@ html.feed footer{position:fixed;left:0;right:0;bottom:0;box-shadow:0 -1px 0 var(
     <button class="btn solid" id="zclose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18"/></svg><span class="lbl">Close</span></button>
   </div>
   <div id="zscroll" tabindex="0"><div id="zpages"></div></div>
-  <div class="zctl">
-    <button class="btn" id="zout" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14"/></svg></button>
-    <button class="btn" id="zin" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg></button>
-  </div>
 </div>
 <footer>
   <span id="where" aria-live="polite"></span>
@@ -191,20 +180,14 @@ if(MODE==='flip'){
   let rt; addEventListener('resize',()=>{clearTimeout(rt); rt=setTimeout(fit,120);});
 } else {
   const feed=document.getElementById('feed');
-  // the page images are the two halves of each spread, so keep each pair joined (tables run across the seam)
-  const units=[[0]]; for(let i=1;i<N-1;i+=2) units.push(i+1<N-1?[i,i+1]:[i]); units.push([N-1]);
-  units.forEach(u=>{ const sp=document.createElement('div'); sp.className='spread'; sp.tabIndex=0; sp.setAttribute('role','button');
-    sp.setAttribute('aria-label','Zoom in on '+(u.length===2?'pages '+(u[0]+1)+'–'+(u[1]+1):'page '+(u[0]+1)));
-    u.forEach(i=>sp.appendChild(makePage(i))); feed.appendChild(sp); });
-  feed.addEventListener('click',e=>{ const sp=e.target.closest('.spread'); if(sp) openZoom(+sp.firstChild.id.slice(1)-1); });
-  feed.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('spread')){ e.preventDefault(); openZoom(+e.target.firstChild.id.slice(1)-1); } });
+  for(let i=0;i<N;i++) feed.appendChild(makePage(i));
   const hh=()=>document.querySelector('header').offsetHeight;
   document.documentElement.style.setProperty('--hh',hh()+'px');
   document.documentElement.style.setProperty('--fh',document.querySelector('footer').offsetHeight+'px');
-  const pick=()=>{ const y=hh()+Math.min((innerHeight-hh())*0.35,48); let best=0;
+  const pick=()=>{ const y=hh()+ (innerHeight-hh())*0.35; let best=0;
     for(let i=0;i<N;i++){ const r=pages[i].getBoundingClientRect(); if(r.top<=y) best=i; else break; } return best; };
   onChange=()=>{ const i=pick(); if(i===current && where.textContent) return; current=i;
-    const g=groupFor(i); where.textContent=(g.length===2?'Pages '+(g[0]+1)+'–'+(g[1]+1):'Page '+(g[0]+1))+' of '+N; scrub.value=i+1; loadAround(i); setHash(i); };
+    where.textContent='Page '+(i+1)+' of '+N; scrub.value=i+1; loadAround(i); setHash(i); };
   let tick=false; addEventListener('scroll',()=>{ if(!tick){ tick=true; requestAnimationFrame(()=>{tick=false; onChange();}); } },{passive:true});
   goTo=(i,instant)=>{ loadAround(i); const y=pages[i].getBoundingClientRect().top+scrollY-hh()-8; window.scrollTo({top:Math.max(0,y),behavior:(instant||reduce)?'instant':'smooth'}); };
   loadAround(0); onChange();
@@ -225,21 +208,12 @@ else fsb.onclick=()=>document.fullscreenElement?document.exitFullscreen():docume
 let lastFeed=wantsFeed(); addEventListener('resize',()=>{ if(wantsFeed()!==lastFeed){ location.hash='page='+(current+1); location.reload(); } });
 // zoom view: the current page (or spread) at reading size; native pan and pinch work inside it
 const zoomEl=document.getElementById('zoom'), zpages=document.getElementById('zpages'), zscroll=document.getElementById('zscroll'), zwhere=document.getElementById('zwhere'), zprev=document.getElementById('zprev'), znext=document.getElementById('znext');
-let zGroup=[0], zOpener=null, zLevel=1; // 0 fit the screen, 1 reading size, 2 large
-const zin=document.getElementById('zin'), zout=document.getElementById('zout');
-function zoomWidth(n){ const vw=innerWidth, two=n===2; // width of one page image, in px
-  const W=[ two?(vw-24)/2:vw-24, two?Math.min(1300,Math.max(700,vw*0.9)):Math.min(1800,Math.max(900,vw*1.4)), two?Math.min(2339,Math.max(1100,vw*1.6)):Math.min(2339,Math.max(1400,vw*2.2)) ];
-  return Math.round(W[zLevel]); }
-function syncZoomButtons(){ zout.disabled=zLevel===0; zin.disabled=zLevel===2; }
-function setZoomLevel(n){ n=Math.max(0,Math.min(2,n)); if(n===zLevel) return;
-  const cx=(zscroll.scrollLeft+zscroll.clientWidth/2)/zscroll.scrollWidth, cy=(zscroll.scrollTop+zscroll.clientHeight/2)/zscroll.scrollHeight;
-  zLevel=n; zpages.style.setProperty('--zw',zoomWidth(zGroup.length)+'px');
-  zscroll.scrollTo(cx*zscroll.scrollWidth-zscroll.clientWidth/2, cy*zscroll.scrollHeight-zscroll.clientHeight/2); syncZoomButtons(); }
-zin.onclick=()=>setZoomLevel(zLevel+1); zout.onclick=()=>setZoomLevel(zLevel-1);
-function groupFor(i){ if((MODE==='feed'||orientation()==='landscape') && i>0 && i<N-1){ const l=i%2?i:i-1; return [l,l+1<N-1?l+1:l].filter((v,k,a)=>a.indexOf(v)===k); } return [i]; }
+let zGroup=[0], zOpener=null;
+function groupFor(i){ if(MODE==='flip' && orientation()==='landscape' && i>0 && i<N-1){ const l=i%2?i:i-1; return [l,l+1]; } return [i]; }
 function renderZoom(g){
   zGroup=g; zpages.textContent='';
-  zpages.style.setProperty('--zw',zoomWidth(g.length)+'px'); syncZoomButtons();
+  const zw=g.length===2 ? Math.min(2339,Math.max(1100,Math.round(innerWidth*0.9))) : Math.min(2339,Math.max(1100,Math.round(innerWidth*1.5)));
+  zpages.style.setProperty('--zw',zw+'px');
   g.forEach(i=>{
     const d=document.createElement('div'); d.className='zp';
     const img=new Image(); img.alt='Page '+(i+1); img.decoding='async'; img.src=SRC(i); d.appendChild(img);
@@ -257,18 +231,16 @@ function renderZoom(g){
   // single pages open centred (the left edge is often just margin); spreads open at the left so the first page is whole
   zscroll.scrollTo(g.length===1?Math.max(0,(zscroll.scrollWidth-zscroll.clientWidth)/2):0,0);
 }
-function openZoom(i){ zOpener=document.activeElement; zoomEl.hidden=false; document.body.style.overflow='hidden'; renderZoom(groupFor(i===undefined?current:i)); zscroll.focus({preventScroll:true}); }
+function openZoom(){ zOpener=document.activeElement; zoomEl.hidden=false; document.body.style.overflow='hidden'; renderZoom(groupFor(current)); zscroll.focus({preventScroll:true}); }
 function closeZoom(){ if(zoomEl.hidden) return; zoomEl.hidden=true; document.body.style.overflow=''; zpages.textContent=''; goTo(zGroup[0],true); if(zOpener&&zOpener.focus) zOpener.focus(); }
 zprev.onclick=()=>{ if(zGroup[0]>0) renderZoom(groupFor(zGroup[0]-1)); };
 znext.onclick=()=>{ const n=zGroup[zGroup.length-1]+1; if(n<N) renderZoom(groupFor(n)); };
 document.getElementById('zclose').onclick=closeZoom;
-document.getElementById('zoomBtn').onclick=()=>openZoom();
+document.getElementById('zoomBtn').onclick=openZoom;
 zoomEl.addEventListener('click',e=>{ const a=e.target.closest&&e.target.closest('a.hs[data-zp]'); if(a){ e.preventDefault(); renderZoom(groupFor(+a.dataset.zp)); } });
 addEventListener('keydown',e=>{
   if(zoomEl.hidden){ if((e.key==='z'||e.key==='Z')&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!(e.target.closest&&e.target.closest('input,textarea,[role=menu]'))) openZoom(); return; }
   if(e.key==='Escape') closeZoom();
-  else if(e.key==='+'||e.key==='=') setZoomLevel(zLevel+1);
-  else if(e.key==='-'||e.key==='_') setZoomLevel(zLevel-1);
   else if(e.key==='ArrowRight'&&e.target===zscroll) znext.onclick();
   else if(e.key==='ArrowLeft'&&e.target===zscroll) zprev.onclick(); });
 // deep link: …/#page=12
