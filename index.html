@@ -19,6 +19,10 @@
 html,body{margin:0}
 body{background:var(--paper);color:var(--ink);font:400 14px/1.5 Montserrat,"Helvetica Neue",Arial,sans-serif;letter-spacing:.08em}
 header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:calc(12px + env(safe-area-inset-top,0px)) clamp(14px,3vw,32px) 10px;background:var(--bar);color:var(--white);z-index:30}
+.hd-left{display:flex;align-items:center;gap:clamp(10px,2vw,18px);min-width:0}
+.logo{display:block;flex:none;line-height:0}
+.logo img{display:block;height:44px;width:auto}
+.logo:focus-visible{outline:2px solid var(--white);outline-offset:4px}
 .brand{display:flex;flex-direction:column;line-height:1.2;min-width:0}
 .brand b{font:400 12px/1.4 Montserrat,sans-serif;letter-spacing:.08em;color:var(--white)}
 .brand h1{margin:2px 0 0;font:400 clamp(16px,2.2vw,22px)/1.25 "Libre Baskerville",Baskerville,Georgia,serif;letter-spacing:.08em}
@@ -93,7 +97,7 @@ html.feed .rates{display:block;background:#fff;margin:0 0 10px;padding:18px clam
 .hint{text-align:center;font-size:12.5px;margin:0 0 12px;color:var(--grey)}
 html.flip .hint{display:none}
 html.feed footer{position:fixed;left:0;right:0;bottom:0;box-shadow:0 -1px 0 var(--stone)}
-@media (max-width:640px){ .tag{display:none} .btn .lbl{display:none} .btn{padding:9px} .brand h1{font-size:16px} }
+@media (max-width:640px){ .tag{display:none} .btn .lbl{display:none} .btn{padding:9px} .brand h1{font-size:14px;line-height:1.25} .brand b{display:none} .logo img{height:34px} .tools{gap:0} .btn{padding:9px} }
 :fullscreen body{background:var(--paper)}
 
 /* ---------- Zoom view ---------- */
@@ -110,7 +114,8 @@ html.feed footer{position:fixed;left:0;right:0;bottom:0;box-shadow:0 -1px 0 var(
 </head>
 <body>
 <header>
-  <div class="brand"><b>Perfect Hideaways</b><h1>Festive season availability <span style="white-space:nowrap">2026–27</span></h1></div>
+  <div class="hd-left"><a class="logo" href="https://www.perfecthideaways.co.za/" target="_blank" rel="noopener" aria-label="Perfect Hideaways website"><img src="ph-logo.png" alt="Perfect Hideaways" width="70" height="44"></a>
+  <div class="brand"><b>Perfect Hideaways</b><h1>Festive season availability <span style="white-space:nowrap">2026–27</span></h1></div></div>
   <div class="tools">
     <button class="btn" id="zoomBtn" aria-label="Zoom in on this page">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5M10.5 8v5M8 10.5h5"/></svg><span class="lbl">Zoom</span></button>
