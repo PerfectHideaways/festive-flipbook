@@ -59,7 +59,17 @@ for pi, p in enumerate(d):
     for r in rows:
         c = r["c"]
         rect = fitz.Rect(r["bb"])
-        url = next((u for lr, u in links if lr.intersects(rect)), None)
+        # Some editions carry a leftover row-wide link box (copy-pasted down
+        # the table, area same on every row) stacked behind the correct
+        # tightly-fit box around just the hideaway name. Picking the first
+        # intersecting link picks whichever InDesign wrote first, which is
+        # often the stale wrapper, not the name's own link -- so pick the
+        # smallest-area intersecting box instead; the real per-name link is
+        # always the tighter fit.
+        candidates = [(lr, u) for lr, u in links if lr.intersects(rect)]
+        tight = [(lr, u) for lr, u in candidates if (lr & rect).get_area() >= 0.9 * rect.get_area()]
+        pool = tight or candidates
+        url = min(pool, key=lambda lu: lu[0].get_area())[1] if pool else None
         for f in ("location", "sleeps", "rate", "availability"):
             if f not in c:
                 problems.append((k, "%s missing %s" % (c["hideaway"], f)))
