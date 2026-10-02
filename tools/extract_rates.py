@@ -4,11 +4,15 @@ SRC = sys.argv[1]
 OUT = sys.argv[2]
 d = fitz.open(SRC)
 
+# Matched as a substring of the upper-cased area heading, because the wording changes between
+# editions ("KAROO" on 29 Sep, "More hideaways in the KAROO" on 02 Oct). Labels match SECTIONS
+# in index.html.
 SECTION_LABEL = {
     "KAROO": "Karoo", "GARDEN ROUTE": "Garden Route", "WEST COAST": "West Coast", "WINELANDS": "Winelands",
-    "OVERBERG": "Overberg", "CAPE TOWN (SURROUNDS)": "Cape Town and surrounds", "KWAZULU-NATAL": "KwaZulu-Natal",
-    "SAFARI": "Safari", "OTHER": "Other",
+    "OVERBERG": "Overberg", "CAPE TOWN": "Cape Town and surrounds", "KWAZULU": "KwaZulu-Natal",
+    "SAFARI": "Safari", "GORGEOUS HIDEAWAYS": "Other", "OTHER": "Other",
 }
+HEADING_SIZE = 30  # area headings are set at 54 pt, table text at 21 pt
 COLS = ["HIDEAWAY", "LOCATION", "SLEEPS", "RATE PER NIGHT", "AVAILABILITY"]
 
 
@@ -25,10 +29,15 @@ for pi, p in enumerate(d):
     k = pi + 1                      # PDF page number (1-based)
     first_img = 2 * k - 3           # 0-based index of the left-hand page image of this spread
     lines = []
+    headings = []
     for b in p.get_text("dict")["blocks"]:
         for l in b.get("lines", []):
             t = clean("".join(s["text"] for s in l["spans"]))
-            if t:
+            if not t:
+                continue
+            if any(s["size"] > HEADING_SIZE for s in l["spans"]):
+                headings.append(t)
+            else:
                 lines.append((t, l["bbox"]))
     H = {t: (bb[0] + bb[2]) / 2 for t, bb in lines if t in COLS}
     if len(H) != 5:
@@ -37,11 +46,16 @@ for pi, p in enumerate(d):
     cols = sorted(H.items(), key=lambda kv: kv[1])
     hy = [bb[3] for t, bb in lines if t == "HIDEAWAY"][0]
     section = None
-    for t, bb in lines:
-        if t in SECTION_LABEL:
-            section = SECTION_LABEL[t]
-    body = [(t, bb) for t, bb in lines
-            if bb[1] > hy and t not in H and t != "Rates & Dates" and t not in SECTION_LABEL]
+    for t in headings:
+        for word, label in SECTION_LABEL.items():
+            if word in t.upper():
+                section = label
+                break
+        if section:
+            break
+    if not section:
+        problems.append((k, "no area heading recognised in %s" % headings))
+    body = [(t, bb) for t, bb in lines if bb[1] > hy and t not in H]
     names = sorted([(bb, t) for t, bb in body if abs((bb[0] + bb[2]) / 2 - H["HIDEAWAY"]) < 70], key=lambda x: (x[0][1] + x[0][3]) / 2)
     rows = [{"y": (bb[1] + bb[3]) / 2, "bb": bb, "c": {"hideaway": t}} for bb, t in names]
     key = {"LOCATION": "location", "SLEEPS": "sleeps", "RATE PER NIGHT": "rate", "AVAILABILITY": "availability"}
