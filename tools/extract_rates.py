@@ -1,4 +1,4 @@
-import fitz, re, json, sys
+import fitz, re, json, sys, os
 
 SRC = sys.argv[1]
 OUT = sys.argv[2]
@@ -10,7 +10,7 @@ d = fitz.open(SRC)
 SECTION_LABEL = {
     "KAROO": "Karoo", "GARDEN ROUTE": "Garden Route", "WEST COAST": "West Coast", "WINELANDS": "Winelands",
     "OVERBERG": "Overberg", "CAPE TOWN": "Cape Town and surrounds", "KWAZULU": "KwaZulu-Natal",
-    "SAFARI": "Safari", "GORGEOUS HIDEAWAYS": "Other", "OTHER": "Other",
+    "SAFARI": "Safari", "GORGEOUS HIDEAWAYS": "More Hideaways", "OTHER": "More Hideaways",
 }
 HEADING_SIZE = 30  # area headings are set at 54 pt, table text at 21 pt
 COLS = ["HIDEAWAY", "LOCATION", "SLEEPS", "RATE PER NIGHT", "AVAILABILITY"]
@@ -93,6 +93,19 @@ for pi, p in enumerate(d):
             problems.append((k, "%s has no link" % c["hideaway"]))
     result[str(first_img)] = {"pdfPage": k, "section": section, "rows": out_rows}
 
+# Typo corrections agreed with the team (tools/corrections.json). Exact matches only.
+corr_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "corrections.json")
+applied = 0
+if os.path.exists(corr_path):
+    for c in json.load(open(corr_path, encoding="utf-8"))["corrections"]:
+        hits = [r for v in result.values() if v["pdfPage"] == c["page"] for r in v["rows"]
+                if r["hideaway"] == c["hideaway"] and r[c["field"]] == c["from"]]
+        if len(hits) != 1:
+            problems.append((c["page"], "correction matched %d rows: %s %s %r" % (len(hits), c["hideaway"], c["field"], c["from"])))
+            continue
+        hits[0][c["field"]] = c["to"]
+        applied += 1
+
 if OUT.endswith(".js"):
     header = "// Rates tables for the phone layout. Generated from the PDF by tools/extract_rates.py; do not edit by hand.\n"
     body = "window.RATES = " + json.dumps(result, ensure_ascii=False, separators=(",", ":")) + ";\n"
@@ -102,4 +115,5 @@ else:
 print("table spreads:", len(result), "| rows:", sum(len(v["rows"]) for v in result.values()))
 for fi, v in result.items():
     print("PDF page %2d -> images %s-%s | %-24s | %d rows" % (v["pdfPage"], int(fi) + 1, int(fi) + 2, v["section"], len(v["rows"])))
+print("corrections applied:", applied)
 print("problems:", problems or "none")

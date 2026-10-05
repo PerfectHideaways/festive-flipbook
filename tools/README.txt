@@ -1,7 +1,9 @@
 Rates tables on phones
 ----------------------
 The phone layout shows the "Rates and dates" pages as real tables. Their data lives in rates.js,
-which is generated from the brochure PDF, so it always matches the PDF.
+which is generated from the brochure PDF, so it matches the PDF apart from the typo corrections
+listed in tools/corrections.json. Each correction must match the PDF text exactly; one that no
+longer matches is listed under "problems" and can be removed once the PDF itself is fixed.
 
 Each new edition:
   1. Put the new PDF in the site folder (same file name as PDF_URL in index.html).
