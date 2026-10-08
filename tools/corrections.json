@@ -1,8 +1,4 @@
 {
-  "_about": "Typos in the brochure PDF text, corrected in the phone/tablet tables only (the page images and the PDF keep the original). Applied by extract_rates.py: each entry must match the extracted text exactly, and one that matches nothing is reported under problems so it can be removed once the designer fixes the PDF.",
-  "corrections": [
-    {"page": 19, "hideaway": "Owloon", "field": "availability",
-     "from": "15 to 20, 27 to 30 Dec 2026,04 to 15 Jan 2027", "to": "15 to 20, 27 to 30 Dec 2026, 04 to 15 Jan 2027",
-     "why": "03 Oct 2026 edition: missing space after the comma; still present on 05 Oct"}
-  ]
+  "_about": "Typos in the brochure PDF text, corrected in the phone/tablet tables only (the page images and the PDF keep the original). Applied by extract_rates.py: each entry must match the extracted text exactly, and one that matches nothing is reported under problems so it can be removed once the designer fixes the PDF. Empty since the 08 Oct 2026 edition, which fixed the last one (Owloon's missing space).",
+  "corrections": []
 }
